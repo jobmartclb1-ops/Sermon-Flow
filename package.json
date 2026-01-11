@@ -1,0 +1,38 @@
+{
+  "name": "sermon-flow",
+  "version": "1.1.0",
+  "description": "Sermon Flow - Bible + Slides + Projection (Windows)",
+  "main": "main.js",
+  "author": "",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "lint:basic": "node -e \"console.log('ok')\""
+  },
+  "build": {
+    "appId": "com.sermonflow.app",
+    "productName": "Sermon Flow",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**",
+      "assets/**",
+      "node_modules/**"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-store": "^9.0.0"
+  }
+}

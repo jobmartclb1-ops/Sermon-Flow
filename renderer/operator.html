@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sermon Flow — Operator</title>
+  <link rel="stylesheet" href="./ui.css" />
+</head>
+<body>
+  <div class="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">SF</div>
+        <div>
+          <div class="title">Sermon Flow</div>
+          <div class="subtitle">Operator</div>
+        </div>
+      </div>
+
+      <div class="mode">
+        <button id="modeSlides" class="pill active">Slides</button>
+        <button id="modeBible" class="pill">Bible</button>
+      </div>
+
+      <div class="right">
+        <div class="version">
+          <div class="label">Current Version</div>
+          <div id="verPill" class="verpill">NLT</div>
+          <div class="hint">F1 KJV · F2 NKJV · F3 NLT · F4 GNT</div>
+        </div>
+        <button id="btnSettings" class="btn">Settings</button>
+        <button id="btnClear" class="btn ghost">Clear</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- LEFT -->
+      <section class="panel">
+        <div class="panelTitle">Controls</div>
+
+        <div class="bigRow">
+          <button id="btnProject" class="btn primary">PROJECT</button>
+          <button id="btnLock" class="btn">Lock</button>
+        </div>
+
+        <div class="row">
+          <button id="btnPrev" class="btn">Prev</button>
+          <button id="btnNext" class="btn">Next</button>
+          <button id="btnBlack" class="btn ghost">Black</button>
+        </div>
+
+        <div class="panelTitle" style="margin-top:18px;">Verse Overlay</div>
+        <div class="card">
+          <div class="small">When showing a verse over slides, return automatically after:</div>
+          <div class="timerLine">
+            <div class="timerBox">60s</div>
+            <div class="small muted">Auto-return is ON</div>
+          </div>
+        </div>
+
+        <div class="panelTitle" style="margin-top:18px;">Background</div>
+        <div class="card">
+          <div class="small muted">Subtle backgrounds are applied automatically with blur + dark overlay so text stays readable.</div>
+        </div>
+      </section>
+
+      <!-- CENTER -->
+      <section class="panel wide">
+        <div id="slidesPane">
+          <div class="panelTitle">Slides</div>
+          <div class="card">
+            <div class="small muted">Put slide images in <code>assets/slides</code> (001.png, 002.png...). Your preacher remote should work (PageDown/PageUp etc.).</div>
+          </div>
+          <div class="thumbs" id="thumbs"></div>
+        </div>
+
+        <div id="biblePane" class="hidden">
+          <div class="panelTitle">Bible</div>
+
+          <div class="card">
+            <div class="small muted">Use Settings to add your API.Bible key and pick Bible IDs for KJV/NKJV/NLT/GNT. Then search and project.</div>
+          </div>
+
+          <div class="searchRow">
+            <input id="searchBox" class="input" placeholder="Search verse text (e.g. 'for God so loved the world') or type a reference (e.g. 'John 3:16')" />
+            <button id="btnSearch" class="btn">Search</button>
+          </div>
+
+          <div class="results" id="results"></div>
+        </div>
+      </section>
+
+      <!-- RIGHT -->
+      <section class="panel">
+        <div class="panelTitle">Preview / Status</div>
+        <div class="preview" id="preview">
+          <div class="previewTitle" id="previewTitle">Ready</div>
+          <div class="previewText" id="previewText">Select a slide or a verse, then PROJECT.</div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <div class="small">Remote status</div>
+          <div class="small muted" id="remoteStatus">Waiting…</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="./operator.js"></script>
+</body>
+</html>

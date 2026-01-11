@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sermon Flow — Settings</title>
+  <link rel="stylesheet" href="./ui.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">SF</div>
+        <div>
+          <div class="title">Sermon Flow</div>
+          <div class="subtitle">Setup & Settings</div>
+        </div>
+      </div>
+      <div class="right">
+        <button id="btnSave" class="btn primary">Save</button>
+      </div>
+    </header>
+
+    <main class="main" style="grid-template-columns: 1fr;">
+      <section class="panel wide">
+
+        <div class="panelTitle">1) API.Bible Key</div>
+        <div class="card">
+          <div class="small muted">Paste your API.Bible key here. This lets Sermon Flow fetch NLT/NKJV/GNT using your licensed access.</div>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <input id="apiKey" class="input" placeholder="api-key..." />
+            <button id="btnTest" class="btn">Test</button>
+          </div>
+          <div class="small muted" id="testStatus" style="margin-top:10px;">Not tested</div>
+        </div>
+
+        <div class="panelTitle" style="margin-top:16px;">2) Choose Bible IDs for each version</div>
+        <div class="card">
+          <div class="small muted">Click “Load Bibles”, then pick the right one for each translation.</div>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <button id="btnLoad" class="btn">Load Bibles</button>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; margin-top:12px; align-items:center;">
+            <div class="small">KJV</div><select id="selKJV" class="input"></select>
+            <div class="small">NKJV</div><select id="selNKJV" class="input"></select>
+            <div class="small">NLT</div><select id="selNLT" class="input"></select>
+            <div class="small">GNT</div><select id="selGNT" class="input"></select>
+          </div>
+        </div>
+
+        <div class="panelTitle" style="margin-top:16px;">3) Defaults</div>
+        <div class="card">
+          <div style="display:grid; grid-template-columns: 220px 1fr; gap:10px; align-items:center;">
+            <div class="small">Default version</div>
+            <select id="defaultVersion" class="input">
+              <option>NLT</option>
+              <option>KJV</option>
+              <option>NKJV</option>
+              <option>GNT</option>
+            </select>
+
+            <div class="small">Verse numbers</div>
+            <select id="verseNums" class="input">
+              <option value="true">On</option>
+              <option value="false">Off</option>
+            </select>
+
+            <div class="small">Overlay return</div>
+            <select id="overlayMs" class="input">
+              <option value="60000">60 seconds</option>
+              <option value="90000">90 seconds</option>
+              <option value="120000">2 minutes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panelTitle" style="margin-top:16px;">4) Remote</div>
+        <div class="card">
+          <div class="small muted">Most clickers work automatically. v1 supports PageDown/PageUp, Arrows, Space, Backspace.</div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="./settings-ui.js"></script>
+</body>
+</html>

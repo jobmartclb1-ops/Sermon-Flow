@@ -1,0 +1,107 @@
+const { app, BrowserWindow, globalShortcut, screen, ipcMain } = require("electron");
+const path = require("path");
+
+let operatorWin = null;
+let projectorWin = null;
+let settingsWin = null;
+
+function createOperatorAndProjector() {
+  const displays = screen.getAllDisplays();
+  const primary = screen.getPrimaryDisplay();
+  const secondary = displays.find(d => d.id !== primary.id) || primary;
+
+  operatorWin = new BrowserWindow({
+    width: 1200,
+    height: 780,
+    title: "Sermon Flow — Operator",
+    backgroundColor: "#0b0f17",
+    webPreferences: { preload: path.join(__dirname, "preload.js") }
+  });
+
+  projectorWin = new BrowserWindow({
+    x: secondary.bounds.x,
+    y: secondary.bounds.y,
+    width: secondary.bounds.width,
+    height: secondary.bounds.height,
+    title: "Sermon Flow — Projector",
+    backgroundColor: "#000000",
+    fullscreen: true,
+    frame: false,
+    alwaysOnTop: true,
+    webPreferences: { preload: path.join(__dirname, "preload.js") }
+  });
+
+  operatorWin.loadFile(path.join(__dirname, "renderer", "operator.html"));
+  projectorWin.loadFile(path.join(__dirname, "renderer", "projector.html"));
+
+  operatorWin.on("closed", () => (operatorWin = null));
+  projectorWin.on("closed", () => (projectorWin = null));
+
+  // Global shortcuts (PowerPoint clickers usually send these)
+  const register = (accel, action) => {
+    globalShortcut.register(accel, () => {
+      if (operatorWin) operatorWin.webContents.send("remote-action", action);
+    });
+  };
+
+  register("PageDown", "NEXT");
+  register("Right", "NEXT");
+  register("Space", "NEXT");
+
+  register("PageUp", "PREV");
+  register("Left", "PREV");
+  register("Backspace", "PREV");
+
+  register("Escape", "CLEAR");
+
+  // Version hotkeys (sticky)
+  register("F1", "SET_VER_KJV");
+  register("F2", "SET_VER_NKJV");
+  register("F3", "SET_VER_NLT");
+  register("F4", "SET_VER_GNT");
+}
+
+function openSettingsWindow() {
+  if (settingsWin) {
+    settingsWin.focus();
+    return;
+  }
+
+  settingsWin = new BrowserWindow({
+    width: 900,
+    height: 700,
+    title: "Sermon Flow — Setup & Settings",
+    backgroundColor: "#0b0f17",
+    webPreferences: { preload: path.join(__dirname, "preload.js") }
+  });
+
+  settingsWin.loadFile(path.join(__dirname, "renderer", "settings.html"));
+  settingsWin.on("closed", () => (settingsWin = null));
+}
+
+app.whenReady().then(() => {
+  createOperatorAndProjector();
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createOperatorAndProjector();
+  });
+});
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});
+
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+});
+
+// Relay operator -> projector
+ipcMain.on("projector:show", (_evt, payload) => {
+  if (projectorWin) projectorWin.webContents.send("projector:show", payload);
+});
+ipcMain.on("projector:clear", () => {
+  if (projectorWin) projectorWin.webContents.send("projector:clear");
+});
+
+// Open settings on demand
+ipcMain.on("settings:open", () => openSettingsWindow());
