@@ -12,13 +12,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
+  uses: actions/setup-node@v4
+  with:
+    node-version: "20"
+
 
       - name: Install dependencies
-        run: npm ci
+  run: npm install
 
       - name: Build installer
         run: npm run dist
