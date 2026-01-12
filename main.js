@@ -16,7 +16,7 @@ function registerShortcuts() {
     });
   };
 
-  // Safe clicker keys (won't break typing)
+  // Safe clicker keys (won’t break typing)
   register("PageDown", "NEXT");
   register("PageUp", "PREV");
   register("Escape", "CLEAR");
@@ -32,12 +32,9 @@ function makeWindow(opts) {
   return new BrowserWindow({
     ...opts,
     webPreferences: {
-      // Keep preload for settings + api helper
       preload: path.join(__dirname, "preload.js"),
-
-      // Make renderer scripts work reliably (buttons, require, etc.)
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: true
     }
   });
 }
@@ -47,7 +44,7 @@ function createProjectorWindow() {
   const primary = screen.getPrimaryDisplay();
   const secondary = displays.find(d => d.id !== primary.id);
 
-  // If there is a real second display, fullscreen there (church mode).
+  // Second display? Fullscreen there.
   if (secondary) {
     projectorWin = makeWindow({
       x: secondary.bounds.x,
@@ -61,7 +58,7 @@ function createProjectorWindow() {
       alwaysOnTop: true
     });
   } else {
-    // If only one display, open windowed preview (test mode).
+    // One screen? Windowed preview so it doesn’t cover you.
     projectorWin = makeWindow({
       width: 900,
       height: 520,
@@ -88,7 +85,7 @@ function createOperatorWindow() {
   operatorWin.loadFile(path.join(__dirname, "renderer", "operator.html"));
   operatorWin.on("closed", () => (operatorWin = null));
 
-  // Only capture remote keys when Operator window is focused
+  // Only capture remote keys when operator is focused
   operatorWin.on("focus", () => {
     unregisterAllShortcuts();
     registerShortcuts();
@@ -120,10 +117,6 @@ function openSettingsWindow() {
 
 app.whenReady().then(() => {
   createWindows();
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindows();
-  });
 });
 
 app.on("window-all-closed", () => {
@@ -134,15 +127,15 @@ app.on("will-quit", () => {
   unregisterAllShortcuts();
 });
 
-// Relay operator -> projector (auto-recreate projector if it was closed)
+// Relay operator -> projector (auto-recreate projector if closed)
 ipcMain.on("projector:show", (_evt, payload) => {
   if (!projectorWin) createProjectorWindow();
-  if (projectorWin) projectorWin.webContents.send("projector:show", payload);
+  projectorWin.webContents.send("projector:show", payload);
 });
-
 ipcMain.on("projector:clear", () => {
   if (!projectorWin) createProjectorWindow();
-  if (projectorWin) projectorWin.webContents.send("projector:clear");
+  projectorWin.webContents.send("projector:clear");
 });
 
+// Open settings
 ipcMain.on("settings:open", () => openSettingsWindow());
