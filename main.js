@@ -9,19 +9,16 @@ function unregisterAllShortcuts() {
   try { globalShortcut.unregisterAll(); } catch {}
 }
 
-function registerSafeShortcuts() {
-  // Only keys that won’t break typing
+function registerShortcuts() {
   const register = (accel, action) => {
     globalShortcut.register(accel, () => {
       if (operatorWin) operatorWin.webContents.send("remote-action", action);
     });
   };
 
-  // Most clickers
+  // Safe clicker keys (won’t break typing)
   register("PageDown", "NEXT");
   register("PageUp", "PREV");
-
-  // Clear projector
   register("Escape", "CLEAR");
 
   // Version switching
@@ -31,20 +28,30 @@ function registerSafeShortcuts() {
   register("F4", "SET_VER_GNT");
 }
 
+function makeWindow(opts) {
+  return new BrowserWindow({
+    ...opts,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      nodeIntegration: true,   // ✅ fixes buttons + require()
+      contextIsolation: true   // keep preload bridge working
+    }
+  });
+}
+
 function createOperatorAndProjector() {
   const displays = screen.getAllDisplays();
   const primary = screen.getPrimaryDisplay();
   const secondary = displays.find(d => d.id !== primary.id) || primary;
 
-  operatorWin = new BrowserWindow({
+  operatorWin = makeWindow({
     width: 1200,
     height: 780,
     title: "Sermon Flow — Operator",
-    backgroundColor: "#0b0f17",
-    webPreferences: { preload: path.join(__dirname, "preload.js") }
+    backgroundColor: "#0b0f17"
   });
 
-  projectorWin = new BrowserWindow({
+  projectorWin = makeWindow({
     x: secondary.bounds.x,
     y: secondary.bounds.y,
     width: secondary.bounds.width,
@@ -53,8 +60,7 @@ function createOperatorAndProjector() {
     backgroundColor: "#000000",
     fullscreen: true,
     frame: false,
-    alwaysOnTop: true,
-    webPreferences: { preload: path.join(__dirname, "preload.js") }
+    alwaysOnTop: true
   });
 
   operatorWin.loadFile(path.join(__dirname, "renderer", "operator.html"));
@@ -63,27 +69,28 @@ function createOperatorAndProjector() {
   operatorWin.on("closed", () => (operatorWin = null));
   projectorWin.on("closed", () => (projectorWin = null));
 
-  // Register safe shortcuts ONLY while Sermon Flow is in use
+  // Only capture remote keys when Sermon Flow is focused
   operatorWin.on("focus", () => {
     unregisterAllShortcuts();
-    registerSafeShortcuts();
+    registerShortcuts();
   });
 
   operatorWin.on("blur", () => {
-    // Stop capturing keys when you click away from the app
     unregisterAllShortcuts();
   });
 }
 
 function openSettingsWindow() {
-  if (settingsWin) { settingsWin.focus(); return; }
+  if (settingsWin) {
+    settingsWin.focus();
+    return;
+  }
 
-  settingsWin = new BrowserWindow({
+  settingsWin = makeWindow({
     width: 900,
     height: 700,
     title: "Sermon Flow — Setup & Settings",
-    backgroundColor: "#0b0f17",
-    webPreferences: { preload: path.join(__dirname, "preload.js") }
+    backgroundColor: "#0b0f17"
   });
 
   settingsWin.loadFile(path.join(__dirname, "renderer", "settings.html"));
