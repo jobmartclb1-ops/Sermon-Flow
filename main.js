@@ -5,6 +5,32 @@ let operatorWin = null;
 let projectorWin = null;
 let settingsWin = null;
 
+function unregisterAllShortcuts() {
+  try { globalShortcut.unregisterAll(); } catch {}
+}
+
+function registerSafeShortcuts() {
+  // Only keys that won’t break typing
+  const register = (accel, action) => {
+    globalShortcut.register(accel, () => {
+      if (operatorWin) operatorWin.webContents.send("remote-action", action);
+    });
+  };
+
+  // Most clickers
+  register("PageDown", "NEXT");
+  register("PageUp", "PREV");
+
+  // Clear projector
+  register("Escape", "CLEAR");
+
+  // Version switching
+  register("F1", "SET_VER_KJV");
+  register("F2", "SET_VER_NKJV");
+  register("F3", "SET_VER_NLT");
+  register("F4", "SET_VER_GNT");
+}
+
 function createOperatorAndProjector() {
   const displays = screen.getAllDisplays();
   const primary = screen.getPrimaryDisplay();
@@ -37,35 +63,20 @@ function createOperatorAndProjector() {
   operatorWin.on("closed", () => (operatorWin = null));
   projectorWin.on("closed", () => (projectorWin = null));
 
-  // Global shortcuts (PowerPoint clickers usually send these)
-  const register = (accel, action) => {
-    globalShortcut.register(accel, () => {
-      if (operatorWin) operatorWin.webContents.send("remote-action", action);
-    });
-  };
+  // Register safe shortcuts ONLY while Sermon Flow is in use
+  operatorWin.on("focus", () => {
+    unregisterAllShortcuts();
+    registerSafeShortcuts();
+  });
 
-  register("PageDown", "NEXT");
-  register("Right", "NEXT");
-  register("Space", "NEXT");
-
-  register("PageUp", "PREV");
-  register("Left", "PREV");
-  register("Backspace", "PREV");
-
-  register("Escape", "CLEAR");
-
-  // Version hotkeys (sticky)
-  register("F1", "SET_VER_KJV");
-  register("F2", "SET_VER_NKJV");
-  register("F3", "SET_VER_NLT");
-  register("F4", "SET_VER_GNT");
+  operatorWin.on("blur", () => {
+    // Stop capturing keys when you click away from the app
+    unregisterAllShortcuts();
+  });
 }
 
 function openSettingsWindow() {
-  if (settingsWin) {
-    settingsWin.focus();
-    return;
-  }
+  if (settingsWin) { settingsWin.focus(); return; }
 
   settingsWin = new BrowserWindow({
     width: 900,
@@ -92,7 +103,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("will-quit", () => {
-  globalShortcut.unregisterAll();
+  unregisterAllShortcuts();
 });
 
 // Relay operator -> projector
