@@ -13,7 +13,7 @@ const store = new Store({
   }
 });
 
-contextBridge.exposeInMainWorld("SermonFlow", {
+const api = {
   // Remote actions
   onRemoteAction: (cb) => ipcRenderer.on("remote-action", (_e, action) => cb(action)),
 
@@ -31,7 +31,7 @@ contextBridge.exposeInMainWorld("SermonFlow", {
   settingsSet: (key, value) => store.set(key, value),
   settingsAll: () => store.store,
 
-  // API.Bible helper: uses `api-key` header
+  // API.Bible helper
   apiBibleFetch: async (url) => {
     const key = store.get("apiBibleKey");
     if (!key) throw new Error("API.Bible key is not set.");
@@ -39,4 +39,11 @@ contextBridge.exposeInMainWorld("SermonFlow", {
     if (!res.ok) throw new Error(`API.Bible error ${res.status}: ${await res.text()}`);
     return await res.json();
   }
-});
+};
+
+// ✅ Works in BOTH modes (isolated or not)
+if (process.contextIsolated) {
+  contextBridge.exposeInMainWorld("SermonFlow", api);
+} else {
+  window.SermonFlow = api;
+}
