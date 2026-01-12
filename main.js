@@ -16,7 +16,7 @@ function registerShortcuts() {
     });
   };
 
-  // Safe clicker keys (won’t break typing)
+  // Safe clicker keys (won't break typing)
   register("PageDown", "NEXT");
   register("PageUp", "PREV");
   register("Escape", "CLEAR");
@@ -32,18 +32,52 @@ function makeWindow(opts) {
   return new BrowserWindow({
     ...opts,
     webPreferences: {
+      // Keep preload for settings + api helper
       preload: path.join(__dirname, "preload.js"),
-      nodeIntegration: true,   // ✅ fixes buttons + require()
-      contextIsolation: true   // keep preload bridge working
+
+      // Make renderer scripts work reliably (buttons, require, etc.)
+      nodeIntegration: true,
+      contextIsolation: false
     }
   });
 }
 
-function createOperatorAndProjector() {
+function createProjectorWindow() {
   const displays = screen.getAllDisplays();
   const primary = screen.getPrimaryDisplay();
-  const secondary = displays.find(d => d.id !== primary.id) || primary;
+  const secondary = displays.find(d => d.id !== primary.id);
 
+  // If there is a real second display, fullscreen there (church mode).
+  if (secondary) {
+    projectorWin = makeWindow({
+      x: secondary.bounds.x,
+      y: secondary.bounds.y,
+      width: secondary.bounds.width,
+      height: secondary.bounds.height,
+      title: "Sermon Flow — Projector",
+      backgroundColor: "#000000",
+      fullscreen: true,
+      frame: false,
+      alwaysOnTop: true
+    });
+  } else {
+    // If only one display, open windowed preview (test mode).
+    projectorWin = makeWindow({
+      width: 900,
+      height: 520,
+      title: "Sermon Flow — Projector (Preview)",
+      backgroundColor: "#000000",
+      fullscreen: false,
+      frame: true,
+      alwaysOnTop: false
+    });
+  }
+
+  projectorWin.loadFile(path.join(__dirname, "renderer", "projector.html"));
+  projectorWin.on("closed", () => (projectorWin = null));
+}
+
+function createOperatorWindow() {
   operatorWin = makeWindow({
     width: 1200,
     height: 780,
@@ -51,25 +85,10 @@ function createOperatorAndProjector() {
     backgroundColor: "#0b0f17"
   });
 
-  projectorWin = makeWindow({
-    x: secondary.bounds.x,
-    y: secondary.bounds.y,
-    width: secondary.bounds.width,
-    height: secondary.bounds.height,
-    title: "Sermon Flow — Projector",
-    backgroundColor: "#000000",
-    fullscreen: true,
-    frame: false,
-    alwaysOnTop: true
-  });
-
   operatorWin.loadFile(path.join(__dirname, "renderer", "operator.html"));
-  projectorWin.loadFile(path.join(__dirname, "renderer", "projector.html"));
-
   operatorWin.on("closed", () => (operatorWin = null));
-  projectorWin.on("closed", () => (projectorWin = null));
 
-  // Only capture remote keys when Sermon Flow is focused
+  // Only capture remote keys when Operator window is focused
   operatorWin.on("focus", () => {
     unregisterAllShortcuts();
     registerShortcuts();
@@ -80,11 +99,13 @@ function createOperatorAndProjector() {
   });
 }
 
+function createWindows() {
+  createOperatorWindow();
+  createProjectorWindow();
+}
+
 function openSettingsWindow() {
-  if (settingsWin) {
-    settingsWin.focus();
-    return;
-  }
+  if (settingsWin) { settingsWin.focus(); return; }
 
   settingsWin = makeWindow({
     width: 900,
@@ -98,10 +119,10 @@ function openSettingsWindow() {
 }
 
 app.whenReady().then(() => {
-  createOperatorAndProjector();
+  createWindows();
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createOperatorAndProjector();
+    if (BrowserWindow.getAllWindows().length === 0) createWindows();
   });
 });
 
@@ -113,13 +134,15 @@ app.on("will-quit", () => {
   unregisterAllShortcuts();
 });
 
-// Relay operator -> projector
+// Relay operator -> projector (auto-recreate projector if it was closed)
 ipcMain.on("projector:show", (_evt, payload) => {
+  if (!projectorWin) createProjectorWindow();
   if (projectorWin) projectorWin.webContents.send("projector:show", payload);
 });
+
 ipcMain.on("projector:clear", () => {
+  if (!projectorWin) createProjectorWindow();
   if (projectorWin) projectorWin.webContents.send("projector:clear");
 });
 
-// Open settings on demand
 ipcMain.on("settings:open", () => openSettingsWindow());
