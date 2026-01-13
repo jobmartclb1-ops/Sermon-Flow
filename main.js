@@ -44,7 +44,7 @@ function createProjectorWindow() {
   const primary = screen.getPrimaryDisplay();
   const secondary = displays.find(d => d.id !== primary.id);
 
-  // Second display? Fullscreen there.
+  // Second display? Fullscreen there (church mode)
   if (secondary) {
     projectorWin = makeWindow({
       x: secondary.bounds.x,
@@ -58,7 +58,7 @@ function createProjectorWindow() {
       alwaysOnTop: true
     });
   } else {
-    // One screen? Windowed preview so it doesn’t cover you.
+    // One screen? Windowed preview (test mode)
     projectorWin = makeWindow({
       width: 900,
       height: 520,
@@ -85,7 +85,7 @@ function createOperatorWindow() {
   operatorWin.loadFile(path.join(__dirname, "renderer", "operator.html"));
   operatorWin.on("closed", () => (operatorWin = null));
 
-  // Only capture remote keys when operator is focused
+  // Only capture remote keys when Operator is focused
   operatorWin.on("focus", () => {
     unregisterAllShortcuts();
     registerShortcuts();
@@ -132,6 +132,7 @@ ipcMain.on("projector:show", (_evt, payload) => {
   if (!projectorWin) createProjectorWindow();
   projectorWin.webContents.send("projector:show", payload);
 });
+
 ipcMain.on("projector:clear", () => {
   if (!projectorWin) createProjectorWindow();
   projectorWin.webContents.send("projector:clear");
