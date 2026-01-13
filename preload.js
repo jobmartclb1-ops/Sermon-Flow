@@ -15,13 +15,16 @@ const store = new Store({
 
 const api = {
   // Remote actions
-  onRemoteAction: (cb) => ipcRenderer.on("remote-action", (_e, action) => cb(action)),
+  onRemoteAction: (cb) =>
+    ipcRenderer.on("remote-action", (_e, action) => cb(action)),
 
   // Projector messaging
   showOnProjector: (payload) => ipcRenderer.send("projector:show", payload),
   clearProjector: () => ipcRenderer.send("projector:clear"),
-  onProjectorShow: (cb) => ipcRenderer.on("projector:show", (_e, payload) => cb(payload)),
-  onProjectorClear: (cb) => ipcRenderer.on("projector:clear", () => cb()),
+  onProjectorShow: (cb) =>
+    ipcRenderer.on("projector:show", (_e, payload) => cb(payload)),
+  onProjectorClear: (cb) =>
+    ipcRenderer.on("projector:clear", () => cb()),
 
   // Settings window
   openSettings: () => ipcRenderer.send("settings:open"),
@@ -36,7 +39,8 @@ const api = {
     const key = store.get("apiBibleKey");
     if (!key) throw new Error("API.Bible key is not set.");
     const res = await fetch(url, { headers: { "api-key": key } });
-    if (!res.ok) throw new Error(`API.Bible error ${res.status}: ${await res.text()}`);
+    if (!res.ok)
+      throw new Error(`API.Bible error ${res.status}: ${await res.text()}`);
     return await res.json();
   }
 };
