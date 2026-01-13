@@ -6,7 +6,9 @@ let projectorWin = null;
 let settingsWin = null;
 
 function unregisterAllShortcuts() {
-  try { globalShortcut.unregisterAll(); } catch {}
+  try {
+    globalShortcut.unregisterAll();
+  } catch {}
 }
 
 function registerShortcuts() {
@@ -16,7 +18,7 @@ function registerShortcuts() {
     });
   };
 
-  // Safe clicker keys (won’t break typing)
+  // Safe clicker keys
   register("PageDown", "NEXT");
   register("PageUp", "PREV");
   register("Escape", "CLEAR");
@@ -34,7 +36,7 @@ function makeWindow(opts) {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
-      contextIsolation: true
+      contextIsolation: false
     }
   });
 }
@@ -44,25 +46,25 @@ function createProjectorWindow() {
   const primary = screen.getPrimaryDisplay();
   const secondary = displays.find(d => d.id !== primary.id);
 
-  // Second display? Fullscreen there (church mode)
+  const v = app.getVersion();
+
   if (secondary) {
     projectorWin = makeWindow({
       x: secondary.bounds.x,
       y: secondary.bounds.y,
       width: secondary.bounds.width,
       height: secondary.bounds.height,
-      title: "Sermon Flow — Projector",
+      title: `Sermon Flow Projector v${v}`,
       backgroundColor: "#000000",
       fullscreen: true,
       frame: false,
       alwaysOnTop: true
     });
   } else {
-    // One screen? Windowed preview (test mode)
     projectorWin = makeWindow({
       width: 900,
       height: 520,
-      title: "Sermon Flow — Projector (Preview)",
+      title: `Sermon Flow Projector (Preview) v${v}`,
       backgroundColor: "#000000",
       fullscreen: false,
       frame: true,
@@ -75,17 +77,18 @@ function createProjectorWindow() {
 }
 
 function createOperatorWindow() {
+  const v = app.getVersion();
+
   operatorWin = makeWindow({
     width: 1200,
     height: 780,
-    title: "Sermon Flow — Operator",
+    title: `Sermon Flow Operator v${v}`,
     backgroundColor: "#0b0f17"
   });
 
   operatorWin.loadFile(path.join(__dirname, "renderer", "operator.html"));
   operatorWin.on("closed", () => (operatorWin = null));
 
-  // Only capture remote keys when Operator is focused
   operatorWin.on("focus", () => {
     unregisterAllShortcuts();
     registerShortcuts();
@@ -96,18 +99,18 @@ function createOperatorWindow() {
   });
 }
 
-function createWindows() {
-  createOperatorWindow();
-  createProjectorWindow();
-}
-
 function openSettingsWindow() {
-  if (settingsWin) { settingsWin.focus(); return; }
+  if (settingsWin) {
+    settingsWin.focus();
+    return;
+  }
+
+  const v = app.getVersion();
 
   settingsWin = makeWindow({
     width: 900,
     height: 700,
-    title: "Sermon Flow — Setup & Settings",
+    title: `Sermon Flow Settings v${v}`,
     backgroundColor: "#0b0f17"
   });
 
@@ -116,7 +119,8 @@ function openSettingsWindow() {
 }
 
 app.whenReady().then(() => {
-  createWindows();
+  createOperatorWindow();
+  createProjectorWindow();
 });
 
 app.on("window-all-closed", () => {
@@ -127,16 +131,14 @@ app.on("will-quit", () => {
   unregisterAllShortcuts();
 });
 
-// Relay operator -> projector (auto-recreate projector if closed)
 ipcMain.on("projector:show", (_evt, payload) => {
   if (!projectorWin) createProjectorWindow();
-  projectorWin.webContents.send("projector:show", payload);
+  if (projectorWin) projectorWin.webContents.send("projector:show", payload);
 });
 
 ipcMain.on("projector:clear", () => {
   if (!projectorWin) createProjectorWindow();
-  projectorWin.webContents.send("projector:clear");
+  if (projectorWin) projectorWin.webContents.send("projector:clear");
 });
 
-// Open settings
 ipcMain.on("settings:open", () => openSettingsWindow());
